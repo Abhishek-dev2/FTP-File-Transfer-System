@@ -15,47 +15,52 @@ public class Server {
         }
     }
 }
+
 class ClientThread extends Thread {
     private Socket commandClientSocket;
     ServerSocket socketForFiles;
+
     public ClientThread(Socket commandClientSocket, ServerSocket socketForFiles) {
         this.commandClientSocket = commandClientSocket;
         this.socketForFiles = socketForFiles;
     }
+
     public void run() {
         try {
-            BufferedReader commandReader = new BufferedReader(new InputStreamReader(commandClientSocket.getInputStream()));
+            BufferedReader commandReader = new BufferedReader(
+                    new InputStreamReader(commandClientSocket.getInputStream()));
             OutputStream os = commandClientSocket.getOutputStream();
             String cmd = commandReader.readLine();
             switch (cmd) {
-                case "1": // send all file names
-                    File[] listOfFiles = (new File("./files")).listFiles();
-                    String fileNames = "";
-                    for (File i : listOfFiles)
-                        fileNames += i.getName() + "*#|*#";
-                    os.write(fileNames.getBytes());
+            case "1": // send all file names
+                File[] listOfFiles = (new File("./files")).listFiles();
+                String fileNames = "";
+                for (File i : listOfFiles)
+                    fileNames += i.getName() + "#%splitter%#";
+                fileNames += "\n";
+                os.write(fileNames.getBytes());
+                os.flush();
+                break;
+            case "2": // Send file to client
+                String fileNameToSend = commandReader.readLine();
+                File file = new File("./files/" + fileNameToSend);
+                if (file.exists() && file.isFile()) {
+                    Socket fileSendingSocket = socketForFiles.accept();
+                    sendFile(file, fileSendingSocket);
+                } else {
+                    System.out.println("XXX File does not exist XXX");
+                    os.write("*#*#*#*Error*#*#*#*\n".getBytes());
                     os.flush();
-                    break;
-                case "2": // Send file to client
-                    String fileNameToSend = commandReader.readLine();
-                    File file = new File("./files/" + fileNameToSend);
-                    if (file.exists() && file.isFile()) {
-                        Socket fileSendingSocket = socketForFiles.accept();
-                        sendFile(file, fileSendingSocket);
-                    } else {
-                        System.out.println("XXX File does not exist XXX");
-                        os.write("*#*#*#*Error*#*#*#*\n".getBytes());
-                        os.flush();
-                    }
-                    break;
-                case "3": // Receive file from the client
-                    String fileNameToReceive = commandReader.readLine();
-                    File fileToReceive = new File("./files/" + fileNameToReceive);
-                    Socket fileReceivingSocket = socketForFiles.accept();
-                    receiveFile(fileToReceive, fileReceivingSocket);
-                    break;
-                default:
-                    System.out.println("XXX Wrong code received XXX");
+                }
+                break;
+            case "3": // Receive file from the client
+                String fileNameToReceive = commandReader.readLine();
+                File fileToReceive = new File("./files/" + fileNameToReceive);
+                Socket fileReceivingSocket = socketForFiles.accept();
+                receiveFile(fileToReceive, fileReceivingSocket);
+                break;
+            default:
+                System.out.println("XXX Wrong code received XXX");
             }
             os.close();
             commandReader.close();
@@ -65,23 +70,24 @@ class ClientThread extends Thread {
             ex.printStackTrace();
         }
     }
+
     private static void receiveFile(File fileToReceive, Socket fileReceivingSocket) throws Exception {
-        BufferedReader fileReader = new BufferedReader(new FileReader(fileToReceive));
+        BufferedReader br = new BufferedReader(new InputStreamReader(fileReceivingSocket.getInputStream()));
         fileToReceive.createNewFile();
         String line;
         Writer writer = new FileWriter(fileToReceive);
         while (true) {
-            line = fileReader.readLine();
-            if(line.equals("*#*#*#*EOF*#*#*#*\n"))
+            line = br.readLine();
+            if (line.equals("*#*#*#*EOF*#*#*#*"))
                 break;
             writer.write(line + "\n");
         }
         writer.flush();
         writer.close();
-        fileReader.close();
+        br.close();
         fileReceivingSocket.close();
     }
-    
+
     private static void sendFile(File file, Socket fileSendingSocket) throws Exception {
         OutputStream os = fileSendingSocket.getOutputStream();
         BufferedReader fileReader = new BufferedReader(new FileReader(file));
