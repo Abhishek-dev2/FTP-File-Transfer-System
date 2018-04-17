@@ -275,7 +275,7 @@ public class FTP extends Application {
         rootPane.setStyle("-fx-background-color : blue");
         rootPane.getChildren().addAll(scroll,footerPane);
         primaryStage.setTitle(" Client Machine ");
-        primaryStage.setScene(new Scene(rootPane,900,650));
+        primaryStage.setScene(new Scene(rootPane,1150,650));
         primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("iconFile.png")));
         primaryStage.show();
     }
