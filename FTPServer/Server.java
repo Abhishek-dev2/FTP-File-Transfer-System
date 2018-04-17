@@ -33,7 +33,7 @@ class ClientThread extends Thread {
             String cmd = commandReader.readLine();
             switch (cmd) {
             case "1": // send all file names
-                File[] listOfFiles = (new File("./files")).listFiles();
+                File[] listOfFiles = (new File("./ServerFiles")).listFiles();
                 String fileNames = "";
                 for (File i : listOfFiles)
                     fileNames += i.getName() + "#%splitter%#";
@@ -43,7 +43,7 @@ class ClientThread extends Thread {
                 break;
             case "2": // Send file to client
                 String fileNameToSend = commandReader.readLine();
-                File file = new File("./files/" + fileNameToSend);
+                File file = new File("./ServerFiles/" + fileNameToSend);
                 if (file.exists() && file.isFile()) {
                     Socket fileSendingSocket = socketForFiles.accept();
                     sendFile(file, fileSendingSocket);
@@ -55,7 +55,7 @@ class ClientThread extends Thread {
                 break;
             case "3": // Receive file from the client
                 String fileNameToReceive = commandReader.readLine();
-                File fileToReceive = new File("./files/" + fileNameToReceive);
+                File fileToReceive = new File("./ServerFiles/" + fileNameToReceive);
                 Socket fileReceivingSocket = socketForFiles.accept();
                 receiveFile(fileToReceive, fileReceivingSocket);
                 break;
